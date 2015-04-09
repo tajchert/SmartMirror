@@ -151,7 +151,7 @@ public class CameraWatcherService extends Service {
             if (img != null && detector.detect(img, size.width, size.height)) {
                 Log.i(TAG, "======================================= Motion Detected");
                 //stopRecording();
-                Intent intent = new Intent(CameraWatcherService.this, ActivityMotionDetected.class);
+                Intent intent = new Intent(CameraWatcherService.this, MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
                 camera.addCallbackBuffer(buffer);
