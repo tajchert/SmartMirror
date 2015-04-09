@@ -15,4 +15,16 @@ public class MainActivity extends ActionBarActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startService(intent);
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SmartMirrorApplication.activityPaused();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SmartMirrorApplication.activityResumed();
+    }
 }

@@ -26,6 +26,9 @@ import com.jwetherell.motiondetection.image.ImageProcessing;
 
 import java.io.IOException;
 
+import de.greenrobot.event.EventBus;
+import pl.tajchert.smartmirror.events.MotionCustomEvent;
+
 import static android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
 
 public class CameraWatcherService extends Service {
@@ -151,9 +154,13 @@ public class CameraWatcherService extends Service {
             if (img != null && detector.detect(img, size.width, size.height)) {
                 Log.i(TAG, "======================================= Motion Detected");
                 //stopRecording();
-                Intent intent = new Intent(CameraWatcherService.this, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                if(SmartMirrorApplication.isActivityVisible()){
+                    EventBus.getDefault().post(new MotionCustomEvent());
+                } else {
+                    Intent intentRun = new Intent(CameraWatcherService.this, MainActivity.class);
+                    intentRun.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intentRun);
+                }
                 camera.addCallbackBuffer(buffer);
             } else {
                 camera.addCallbackBuffer(buffer);
