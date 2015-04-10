@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import de.greenrobot.event.EventBus;
+import pl.droidsonroids.gif.GifImageView;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
 
 
@@ -21,13 +23,20 @@ public class MainActivity extends ActionBarActivity {
             | View.SYSTEM_UI_FLAG_FULLSCREEN
             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
     TextView textView;
+    GifImageView gifDecoderView;
     final Handler h = new Handler();
 
 
     final Runnable runnableTurnOff = new Runnable() {
         @Override
         public void run() {
-            textView.setText("BYE!");
+            gifDecoderView.setVisibility(View.INVISIBLE);
+            WindowManager.LayoutParams params = getWindow().getAttributes();
+            /** Turn off: */
+            params.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+            params.screenBrightness = 0f;
+            getWindow().setAttributes(params);
+            //textView.setText("BYE!");
         }
     };
 
@@ -38,6 +47,8 @@ public class MainActivity extends ActionBarActivity {
 
         setContentView(R.layout.activity_main);
         textView = (TextView) findViewById(R.id.textMain);
+        gifDecoderView = (GifImageView) findViewById(R.id.gifView);
+
         Intent intent = new Intent(MainActivity.this, CameraWatcherService.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startService(intent);
@@ -45,7 +56,15 @@ public class MainActivity extends ActionBarActivity {
 
     public void onEvent(MotionCustomEvent motionCustomEvent) {
         //Motion detected!
-        textView.setText("HELLO!");
+        //textView.setText("HELLO");
+        WindowManager.LayoutParams params = this.getWindow().getAttributes();
+        params.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+        //TODO restoring from original value
+        params.screenBrightness = 1f;
+        this.getWindow().setAttributes(params);
+        gifDecoderView.setVisibility(View.VISIBLE);
+
+        h.removeCallbacks(runnableTurnOff);
         h.postDelayed(runnableTurnOff, 6000);
     }
 

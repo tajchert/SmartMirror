@@ -45,10 +45,6 @@ public class CameraWatcherService extends Service {
     private RgbMotionDetection detector = null;
     private NotificationManager notifier;
 
-    public Camera getCamera() {
-        return camera;
-    }
-
     private static SurfaceTexture getTexture() {
         int[] textures = new int[1];
         GLES20.glGenTextures(1, textures, 0);
@@ -86,6 +82,9 @@ public class CameraWatcherService extends Service {
         if (camera == null) {
             try {
                 camera = openFrontFacingCameraGingerbread();
+                Camera.Parameters parameters = camera.getParameters();
+                parameters.setAutoExposureLock(true);
+                camera.setParameters(parameters);
             } catch (Exception ex) {
                 Log.e(TAG, ex.getMessage());
                 ex.printStackTrace();
