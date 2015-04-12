@@ -1,1 +1,1 @@
-include ':app', ':motiondetection'
+include ':app'

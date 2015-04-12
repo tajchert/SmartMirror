@@ -1,29 +1,22 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package pl.tajchert.smartmirror;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.app.TaskStackBuilder;
-import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.opengl.GLES20;
-import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.jwetherell.motiondetection.detection.RgbMotionDetection;
-import com.jwetherell.motiondetection.image.ImageProcessing;
-
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import de.greenrobot.event.EventBus;
@@ -37,13 +30,9 @@ public class CameraWatcherService extends Service {
 
     private Camera camera;
     private Camera.Size size;
+    private int prevBrightness;
     private byte[] buffer;
     private SurfaceTexture texture;
-    private boolean toastPopped = false;
-    private boolean bound = false;
-    private static final int NOTIFICATION_ID = 614;
-    private RgbMotionDetection detector = null;
-    private NotificationManager notifier;
 
     private static SurfaceTexture getTexture() {
         int[] textures = new int[1];
@@ -54,9 +43,6 @@ public class CameraWatcherService extends Service {
 
     @Override
     public void onCreate() {
-        detector = new RgbMotionDetection();
-        setSensitivity(60);
-        notifyMessage("DeltaMonitor Running","Touch to Preview Camera");
         
         try{
             super.onCreate();
@@ -74,7 +60,6 @@ public class CameraWatcherService extends Service {
         if(camera != null){
             camera.release();
         }
-        notifier.cancel(NOTIFICATION_ID);
         super.onDestroy();
     }
 
@@ -83,7 +68,8 @@ public class CameraWatcherService extends Service {
             try {
                 camera = openFrontFacingCameraGingerbread();
                 Camera.Parameters parameters = camera.getParameters();
-                parameters.setAutoExposureLock(true);
+                //parameters.setPreviewFpsRange(0, 10);
+                //parameters.setPreviewFormat(ImageFormat.RGB_565);
                 camera.setParameters(parameters);
             } catch (Exception ex) {
                 Log.e(TAG, ex.getMessage());
@@ -110,8 +96,6 @@ public class CameraWatcherService extends Service {
                 texture = getTexture();
             }
             camera.setPreviewTexture(texture);
-            
-            detector.reset();
             camera.setPreviewCallbackWithBuffer(previewCallback);
             camera.startPreview();
 
@@ -134,8 +118,6 @@ public class CameraWatcherService extends Service {
             Log.e(TAG, "IOException during recording setdown " + ex.getMessage());
             ex.printStackTrace();
         }
-
-        toastPopped = false;
     }
 
     private final Camera.PreviewCallback previewCallback = new Camera.PreviewCallback() {
@@ -148,11 +130,15 @@ public class CameraWatcherService extends Service {
             if (size == null) {
                 return;
             }
-
-            int[] img = ImageProcessing.decodeYUV420SPtoRGB(buffer, size.width, size.height);
-            if (img != null && detector.detect(img, size.width, size.height)) {
-                Log.i(TAG, "======================================= Motion Detected");
-                //stopRecording();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            YuvImage yuvImage = new YuvImage(data, ImageFormat.NV21, size.width, size.height, null);
+            yuvImage.compressToJpeg(new Rect(0, 0, size.width, size.height), 50, out);
+            byte[] imageBytes = out.toByteArray();
+            Bitmap image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+            int currentBrigthness = calculateBrightness(image);
+            Log.d(TAG, "onPreviewFrame current: " + currentBrigthness);
+            Log.d(TAG, "onPreviewFrame prev: " + prevBrightness);
+            if(Math.abs(prevBrightness - currentBrigthness) >  5) {
                 if(SmartMirrorApplication.isActivityVisible()){
                     EventBus.getDefault().post(new MotionCustomEvent());
                 } else {
@@ -160,73 +146,48 @@ public class CameraWatcherService extends Service {
                     intentRun.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intentRun);
                 }
-                camera.addCallbackBuffer(buffer);
-            } else {
-                camera.addCallbackBuffer(buffer);
-                if (!toastPopped) {
-                    toastPopped = true;
-                    Toast.makeText(getBaseContext(), "DeltaMonitor is now recording in the background. Changes in the camera's view will wake up camera preview.", Toast.LENGTH_SHORT).show();
-                }
             }
+
+            prevBrightness = currentBrigthness;
+            final Handler h = new Handler();
+            final Runnable r2 = new Runnable() {
+                @Override
+                public void run() {
+                    camera.addCallbackBuffer(buffer);
+                }
+            };
+            h.postDelayed(r2, 2000);
         }
     };
 
-    public class CameraWatcherServiceBinder extends Binder {
 
-        CameraWatcherService getService() {
-            return CameraWatcherService.this;
+    public int calculateBrightness(Bitmap bitmap) {
+        int redColors = 0;
+        int greenColors = 0;
+        int blueColors = 0;
+        int pixelCount = 0;
+
+        for (int y = 0; y < bitmap.getHeight(); y++)
+        {
+            for (int x = 0; x < bitmap.getWidth(); x++)
+            {
+                int c = bitmap.getPixel(x, y);
+                pixelCount++;
+                redColors += Color.red(c);
+                greenColors += Color.green(c);
+                blueColors += Color.blue(c);
+            }
         }
+        // calculate average of bitmap r,g,b values
+        int red = (redColors/pixelCount);
+        int green = (greenColors/pixelCount);
+        int blue = (blueColors/pixelCount);
+        return (int) Math.round(0.2126*red + 0.7152*green + 0.0722*blue);
     }
-
-    private final IBinder binder = new CameraWatcherServiceBinder();
 
     @Override
     public IBinder onBind(Intent intent) {
-        bound = true;
-        return binder;
-    }
-
-    @Override
-    public boolean onUnbind(Intent intent) {
-        bound = false;
-        return super.onUnbind(intent);
-    }
-    
-    public void setSensitivity(int sensitivity){
-        this.detector.setmThreshold(90-sensitivity);
-    }
-    
-    public int getSensitivity(){
-        return 90-this.detector.getmThreshold();
-    }
-    
-    
-    
-    
-    private void notifyMessage(String title, String message) {
-        NotificationCompat.Builder mBuilder
-                = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(title)
-                .setContentText(message);
-        
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, MainActivity.class);
-
-        // The stack builder object will contain an artificial back stack for the
-        // started Activity.
-        // This ensures that navigating backward from the Activity leads out of
-        // your application to the Home screen.
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent( 0, PendingIntent.FLAG_UPDATE_CURRENT );
-        mBuilder.setContentIntent(resultPendingIntent);
-
-        if( notifier == null){
-            notifier = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        }
-        notifier.notify(NOTIFICATION_ID, mBuilder.build());
+        return null;
     }
 
     private Camera openFrontFacingCameraGingerbread() {

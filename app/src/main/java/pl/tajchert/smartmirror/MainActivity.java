@@ -65,7 +65,7 @@ public class MainActivity extends ActionBarActivity {
         gifDecoderView.setVisibility(View.VISIBLE);
 
         h.removeCallbacks(runnableTurnOff);
-        h.postDelayed(runnableTurnOff, 6000);
+        h.postDelayed(runnableTurnOff, 10000);
     }
 
     @Override
