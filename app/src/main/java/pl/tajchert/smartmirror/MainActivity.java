@@ -52,6 +52,9 @@ public class MainActivity extends ActionBarActivity {
         Intent intent = new Intent(MainActivity.this, CameraWatcherService.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startService(intent);
+
+        h.removeCallbacks(runnableTurnOff);
+        h.postDelayed(runnableTurnOff, 10000);
     }
 
     public void onEvent(MotionCustomEvent motionCustomEvent) {

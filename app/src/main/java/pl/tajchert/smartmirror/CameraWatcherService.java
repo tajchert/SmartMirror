@@ -2,13 +2,8 @@ package pl.tajchert.smartmirror;
 
 import android.app.Service;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.ImageFormat;
-import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
-import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.opengl.GLES20;
 import android.os.Handler;
@@ -16,11 +11,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import de.greenrobot.event.EventBus;
-import pl.tajchert.smartmirror.events.MotionCustomEvent;
 
 import static android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
 
@@ -30,7 +21,7 @@ public class CameraWatcherService extends Service {
 
     private Camera camera;
     private Camera.Size size;
-    private int prevBrightness;
+    private static int prevBrightness;
     private byte[] buffer;
     private SurfaceTexture texture;
 
@@ -43,7 +34,7 @@ public class CameraWatcherService extends Service {
 
     @Override
     public void onCreate() {
-        
+
         try{
             super.onCreate();
             startRecording();
@@ -130,25 +121,10 @@ public class CameraWatcherService extends Service {
             if (size == null) {
                 return;
             }
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            YuvImage yuvImage = new YuvImage(data, ImageFormat.NV21, size.width, size.height, null);
-            yuvImage.compressToJpeg(new Rect(0, 0, size.width, size.height), 50, out);
-            byte[] imageBytes = out.toByteArray();
-            Bitmap image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-            int currentBrigthness = calculateBrightness(image);
-            Log.d(TAG, "onPreviewFrame current: " + currentBrigthness);
-            Log.d(TAG, "onPreviewFrame prev: " + prevBrightness);
-            if(Math.abs(prevBrightness - currentBrigthness) >  5) {
-                if(SmartMirrorApplication.isActivityVisible()){
-                    EventBus.getDefault().post(new MotionCustomEvent());
-                } else {
-                    Intent intentRun = new Intent(CameraWatcherService.this, MainActivity.class);
-                    intentRun.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intentRun);
-                }
-            }
 
-            prevBrightness = currentBrigthness;
+            ImageProcessingTask imageProcessingTask = new ImageProcessingTask(CameraWatcherService.this);
+            imageProcessingTask.execute(new ImageCapturObject(data, size.width, size.height, CameraWatcherService.prevBrightness));
+
             final Handler h = new Handler();
             final Runnable r2 = new Runnable() {
                 @Override
@@ -156,33 +132,12 @@ public class CameraWatcherService extends Service {
                     camera.addCallbackBuffer(buffer);
                 }
             };
-            h.postDelayed(r2, 2000);
+            h.postDelayed(r2, 500);
         }
     };
 
-
-    public int calculateBrightness(Bitmap bitmap) {
-        int redColors = 0;
-        int greenColors = 0;
-        int blueColors = 0;
-        int pixelCount = 0;
-
-        for (int y = 0; y < bitmap.getHeight(); y++)
-        {
-            for (int x = 0; x < bitmap.getWidth(); x++)
-            {
-                int c = bitmap.getPixel(x, y);
-                pixelCount++;
-                redColors += Color.red(c);
-                greenColors += Color.green(c);
-                blueColors += Color.blue(c);
-            }
-        }
-        // calculate average of bitmap r,g,b values
-        int red = (redColors/pixelCount);
-        int green = (greenColors/pixelCount);
-        int blue = (blueColors/pixelCount);
-        return (int) Math.round(0.2126*red + 0.7152*green + 0.0722*blue);
+    public static void setPrevBrightness(Integer value) {
+        CameraWatcherService.prevBrightness = value;
     }
 
     @Override
