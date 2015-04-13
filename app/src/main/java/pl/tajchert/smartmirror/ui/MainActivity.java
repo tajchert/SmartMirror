@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
@@ -21,12 +22,14 @@ import pl.tajchert.smartmirror.R;
 import pl.tajchert.smartmirror.SmartMirrorApplication;
 import pl.tajchert.smartmirror.api.DateApi;
 import pl.tajchert.smartmirror.api.StoryHackerNews;
+import pl.tajchert.smartmirror.api.WeatherCity;
 import pl.tajchert.smartmirror.api.WebContentManager;
 import pl.tajchert.smartmirror.camera.CameraWatcherService;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
 
 
 public class MainActivity extends ActionBarActivity {
+    private static final String TAG = "MainActivity";
     private int currentApiVersion = android.os.Build.VERSION.SDK_INT;
     final int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -114,6 +117,10 @@ public class MainActivity extends ActionBarActivity {
             textView.setVisibility(View.VISIBLE);
             textView.setText(dateApi.text);
         }
+    }
+
+    public void onEvent(WeatherCity weatherCity) {
+        Log.d(TAG, "onEvent weather: " + weatherCity);
     }
 
     private void updateNewsList(){

@@ -7,5 +7,5 @@ import retrofit.http.Query;
 
 public interface IWeatherApi {
     @GET("/forecast/daily")
-    void getForecastDayily(@Query("lat") String lat, @Query("lon") String lon, @Query("units") String units, @Query("cnt") String dayNumber, Callback<WeatherWeather> callback);
+    void getForecastDayily(@Query("lat") double lat, @Query("lon") double lon, @Query("units") String units, @Query("cnt") int dayNumber, Callback<WeatherCity> callback);
 }

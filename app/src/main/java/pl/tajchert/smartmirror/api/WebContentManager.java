@@ -22,7 +22,7 @@ public class WebContentManager {
     private static final String TAG = "WebContentManager";
     private static final String API_URL_HACKER_NEWS = "https://hacker-news.firebaseio.com";
     private static final String API_URL_FACT = "https://numbersapi.p.mashape.com/";
-    private static final String API_URL_WEATHER = "http://api.openweathermap.org/data/2.5/forecast/daily/";
+    private static final String API_URL_WEATHER = "http://api.openweathermap.org/data/2.5";
     //http://api.openweathermap.org/data/2.5/forecast/daily?lat=52.252252252252255&lon=20.985195166412463l&units=metric&cnt=3
     private static final int NEWS_NUMBER_HACKER_NEWS = 20;
     private static final long milisecondsTimeHackerNewsUpdate = 600000;//10min
@@ -35,12 +35,12 @@ public class WebContentManager {
         long currentTime= Calendar.getInstance().getTimeInMillis();
         if(currentTime - SmartMirrorApplication.getTimeRefreshPrevious() > milisecondsTimeRefresh) {
             if (currentTime - SmartMirrorApplication.getTimeLastHackerNewsUpdate() > milisecondsTimeHackerNewsUpdate) {
-                refreshHackerNews();
+                //refreshHackerNews();
             }
 
             if (currentTime - SmartMirrorApplication.getTimeLastDateFactUpdate() > milisecondsTimeDateFactUpdate) {
                 Calendar cal = Calendar.getInstance();
-                getFact((cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH));
+                //getFact((cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH));
             }
 
             if (currentTime - SmartMirrorApplication.getTimeLastWeatherUpdate() > milisecondsTimeWeatherUpdate) {
@@ -53,10 +53,14 @@ public class WebContentManager {
     }
 
     public void getWeather(Location location) {
+        if(location == null) {
+           return;
+        }
         IWeatherApi articleGetter = getHostAdapter(API_URL_WEATHER, false).create(IWeatherApi.class);
-        articleGetter.getForecastDayily(String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude()), "metric", "3", new Callback<WeatherWeather>() {
+        articleGetter.getForecastDayily(location.getLatitude(), location.getLongitude(), "metric", 3, new Callback<WeatherCity>() {
             @Override
-            public void success(WeatherWeather weatherWeather, Response response) {
+            public void success(WeatherCity weatherWeather, Response response) {
+                Log.d(TAG, "success :" + weatherWeather);
                 SmartMirrorApplication.setTimeLastWeatherUpdate(Calendar.getInstance().getTimeInMillis());
                 EventBus.getDefault().post(weatherWeather);
                 EventBus.getDefault().postSticky(new ConnectionEvent());
@@ -64,6 +68,7 @@ public class WebContentManager {
 
             @Override
             public void failure(RetrofitError error) {
+                Log.d(TAG, "failure : " + error.getLocalizedMessage());
                 EventBus.getDefault().postSticky(new ConnectionEvent(true, error.getUrl()));
             }
         });

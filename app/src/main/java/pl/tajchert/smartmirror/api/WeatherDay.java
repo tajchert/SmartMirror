@@ -3,6 +3,8 @@ package pl.tajchert.smartmirror.api;
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
 
+import java.util.List;
+
 /**
  * Created by tajchert on 13.04.15.
  */
@@ -17,7 +19,7 @@ public class WeatherDay {
     @JsonField
     public int humidity;
     @JsonField
-    public WeatherWeather weather;
+    public List<WeatherWeather> weather;
     @JsonField
     public float speed;
     @JsonField

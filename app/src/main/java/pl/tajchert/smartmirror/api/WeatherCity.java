@@ -1,7 +1,5 @@
 package pl.tajchert.smartmirror.api;
 
-import android.media.Image;
-
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
 
@@ -13,7 +11,7 @@ import java.util.List;
 @JsonObject
 public class WeatherCity {
     @JsonField
-    public List<Image> list;
+    public List<WeatherDay> list;
     @JsonField
     public String cod;
     @JsonField

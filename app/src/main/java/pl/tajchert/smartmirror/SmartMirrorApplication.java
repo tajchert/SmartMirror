@@ -4,7 +4,6 @@ import android.app.Application;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
-import android.util.Log;
 
 /**
  * Created by tajchert on 09.04.15.
@@ -68,7 +67,6 @@ public class SmartMirrorApplication extends Application {
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         String locationProvider = LocationManager.NETWORK_PROVIDER;
         Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
-        Log.d(TAG, "getLastLocation lat:" + lastKnownLocation.getLatitude() + ", long: " + lastKnownLocation.getLongitude());
         return lastKnownLocation;
     }
 }
