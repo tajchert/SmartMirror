@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import de.greenrobot.event.EventBus;
 import pl.droidsonroids.gif.GifImageView;
+import pl.tajchert.smartmirror.api.WebContentManager;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
 
 
@@ -66,6 +67,7 @@ public class MainActivity extends ActionBarActivity {
         params.screenBrightness = 1f;
         this.getWindow().setAttributes(params);
         gifDecoderView.setVisibility(View.VISIBLE);
+        WebContentManager.refresh();
 
         h.removeCallbacks(runnableTurnOff);
         h.postDelayed(runnableTurnOff, 10000);
