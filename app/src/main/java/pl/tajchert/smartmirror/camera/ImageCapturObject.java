@@ -1,4 +1,4 @@
-package pl.tajchert.smartmirror;
+package pl.tajchert.smartmirror.camera;
 
 /**
  * Created by tajchert on 12.04.15.

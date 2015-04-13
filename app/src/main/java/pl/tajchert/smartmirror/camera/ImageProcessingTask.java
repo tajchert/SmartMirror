@@ -1,4 +1,4 @@
-package pl.tajchert.smartmirror;
+package pl.tajchert.smartmirror.camera;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +14,8 @@ import android.util.Log;
 import java.io.ByteArrayOutputStream;
 
 import de.greenrobot.event.EventBus;
+import pl.tajchert.smartmirror.MainActivity;
+import pl.tajchert.smartmirror.SmartMirrorApplication;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
 
 /**

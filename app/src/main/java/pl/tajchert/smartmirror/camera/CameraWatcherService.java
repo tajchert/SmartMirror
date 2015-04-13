@@ -1,4 +1,4 @@
-package pl.tajchert.smartmirror;
+package pl.tajchert.smartmirror.camera;
 
 import android.app.Service;
 import android.content.Intent;

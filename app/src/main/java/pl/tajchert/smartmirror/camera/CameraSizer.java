@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package pl.tajchert.smartmirror;
+package pl.tajchert.smartmirror.camera;
 
 import android.hardware.Camera;
 import android.util.Log;

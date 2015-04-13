@@ -12,6 +12,7 @@ import android.widget.TextView;
 import de.greenrobot.event.EventBus;
 import pl.droidsonroids.gif.GifImageView;
 import pl.tajchert.smartmirror.api.WebContentManager;
+import pl.tajchert.smartmirror.camera.CameraWatcherService;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
 
 
