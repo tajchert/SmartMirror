@@ -94,7 +94,7 @@ public class MainActivity extends ActionBarActivity {
         this.getWindow().setAttributes(params);
         //gifDecoderView.setVisibility(View.VISIBLE);
         linearLayout.setVisibility(View.VISIBLE);
-        webContentManager.refresh();
+        webContentManager.refresh(MainActivity.this);
 
         handler.removeCallbacks(runnableTurnOff);
         handler.postDelayed(runnableTurnOff, 10000);

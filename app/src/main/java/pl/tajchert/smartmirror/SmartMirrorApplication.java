@@ -1,15 +1,21 @@
 package pl.tajchert.smartmirror;
 
 import android.app.Application;
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationManager;
+import android.util.Log;
 
 /**
  * Created by tajchert on 09.04.15.
  */
 public class SmartMirrorApplication extends Application {
+    private static final String TAG = "SmartMirrorApplication";
 
     private static boolean activityVisible;
     private static long timeLastHackerNewsUpdate;
     private static long timeLastDateFactUpdate;
+    private static long timeLastWeatherUpdate;
     private static long timeRefreshPrevious;
 
 
@@ -46,7 +52,23 @@ public class SmartMirrorApplication extends Application {
         SmartMirrorApplication.timeRefreshPrevious = timeRefreshPrevious;
     }
 
+    public static long getTimeLastWeatherUpdate() {
+        return timeLastWeatherUpdate;
+    }
+
+    public static void setTimeLastWeatherUpdate(long timeLastWeatherUpdate) {
+        SmartMirrorApplication.timeLastWeatherUpdate = timeLastWeatherUpdate;
+    }
+
     public static void activityPaused() {
         activityVisible = false;
+    }
+
+    public static Location getLastLocation(Context context) {
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        String locationProvider = LocationManager.NETWORK_PROVIDER;
+        Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+        Log.d(TAG, "getLastLocation lat:" + lastKnownLocation.getLatitude() + ", long: " + lastKnownLocation.getLongitude());
+        return lastKnownLocation;
     }
 }

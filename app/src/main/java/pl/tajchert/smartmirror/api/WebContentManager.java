@@ -1,5 +1,7 @@
 package pl.tajchert.smartmirror.api;
 
+import android.content.Context;
+import android.location.Location;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -20,13 +22,16 @@ public class WebContentManager {
     private static final String TAG = "WebContentManager";
     private static final String API_URL_HACKER_NEWS = "https://hacker-news.firebaseio.com";
     private static final String API_URL_FACT = "https://numbersapi.p.mashape.com/";
+    private static final String API_URL_WEATHER = "http://api.openweathermap.org/data/2.5/forecast/daily/";
+    //http://api.openweathermap.org/data/2.5/forecast/daily?lat=52.252252252252255&lon=20.985195166412463l&units=metric&cnt=3
     private static final int NEWS_NUMBER_HACKER_NEWS = 20;
     private static final long milisecondsTimeHackerNewsUpdate = 600000;//10min
     private static final long milisecondsTimeDateFactUpdate = 10000;//10sec
+    private static final long milisecondsTimeWeatherUpdate = 600000;//10min
     private static final long milisecondsTimeRefresh = 1000;//1sec
     public ArrayList<StoryHackerNews> storiesHackerNews;
 
-    public void refresh() {
+    public void refresh(Context context) {
         long currentTime= Calendar.getInstance().getTimeInMillis();
         if(currentTime - SmartMirrorApplication.getTimeRefreshPrevious() > milisecondsTimeRefresh) {
             if (currentTime - SmartMirrorApplication.getTimeLastHackerNewsUpdate() > milisecondsTimeHackerNewsUpdate) {
@@ -37,9 +42,31 @@ public class WebContentManager {
                 Calendar cal = Calendar.getInstance();
                 getFact((cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH));
             }
+
+            if (currentTime - SmartMirrorApplication.getTimeLastWeatherUpdate() > milisecondsTimeWeatherUpdate) {
+                Location location = SmartMirrorApplication.getLastLocation(context);
+                getWeather(location);
+            }
+
             SmartMirrorApplication.setTimeRefreshPrevious(currentTime);
         }
+    }
 
+    public void getWeather(Location location) {
+        IWeatherApi articleGetter = getHostAdapter(API_URL_WEATHER, false).create(IWeatherApi.class);
+        articleGetter.getForecastDayily(String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude()), "metric", "3", new Callback<WeatherWeather>() {
+            @Override
+            public void success(WeatherWeather weatherWeather, Response response) {
+                SmartMirrorApplication.setTimeLastWeatherUpdate(Calendar.getInstance().getTimeInMillis());
+                EventBus.getDefault().post(weatherWeather);
+                EventBus.getDefault().postSticky(new ConnectionEvent());
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                EventBus.getDefault().postSticky(new ConnectionEvent(true, error.getUrl()));
+            }
+        });
     }
 
     public void refreshHackerNews() {
