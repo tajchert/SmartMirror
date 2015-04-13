@@ -21,7 +21,7 @@ import pl.tajchert.smartmirror.events.MotionCustomEvent;
 /**
  * Created by tajchert on 12.04.15.
  */
-public class ImageProcessingTask extends AsyncTask<ImageCapturObject, Integer, Integer> {
+public class ImageProcessingTask extends AsyncTask<ImageCapturObject, ImageCapturObject, ImageCapturObject> {
     private static final String TAG = "ImageProcessingTask";
     private Context context;
 
@@ -30,7 +30,7 @@ public class ImageProcessingTask extends AsyncTask<ImageCapturObject, Integer, I
     }
 
     @Override
-    protected Integer doInBackground(ImageCapturObject... params) {
+    protected ImageCapturObject doInBackground(ImageCapturObject... params) {
         if(params == null || params.length == 0 || params[0] == null) {
             return null;
         }
@@ -42,21 +42,25 @@ public class ImageProcessingTask extends AsyncTask<ImageCapturObject, Integer, I
         byte[] imageBytes = out.toByteArray();
         Bitmap image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
         int currentBrigthness = calculateBrightness(image);
-        Log.d(TAG, "onPreviewFrame current: " + currentBrigthness);
-        Log.d(TAG, "onPreviewFrame prev: " + capture.prevBrightness);
-        capture.brightnessChange = Math.abs(capture.prevBrightness - currentBrigthness);
-        CameraWatcherService.setPrevBrightness(currentBrigthness);
-        return capture.brightnessChange;
+        capture.brightnessCurrent = currentBrigthness;
+        capture.brightnessChangeTemporary = Math.abs(CameraWatcherService.getBrightnessPrev() - currentBrigthness);
+        capture.brightnessChangeLongterm = Math.abs(CameraWatcherService.getBrightnessLastChanged() - currentBrigthness);
+        CameraWatcherService.setBrightnessPrev(currentBrigthness);
+        return capture;
     }
 
     @Override
-    protected void onPostExecute(Integer brightnessChange) {
-        if(brightnessChange == null) {
+    protected void onPostExecute(ImageCapturObject capture) {
+        if(capture == null) {
             return;
         }
 
-        Log.d(TAG, "onPreviewFrame change: " + brightnessChange);
-        if(brightnessChange >  2) {
+        Log.d(TAG, "onPreviewFrame current: " + capture.brightnessCurrent);
+        Log.d(TAG, "onPreviewFrame changeTemporary: " + capture.brightnessChangeTemporary);
+        Log.d(TAG, "onPreviewFrame changeLongterm: " + capture.brightnessChangeLongterm);
+
+        if(capture.brightnessChangeTemporary >  2 || capture.brightnessChangeLongterm > 2) {
+            CameraWatcherService.setBrightnessLastChanged(capture.brightnessCurrent);
             if(SmartMirrorApplication.isActivityVisible()){
                 EventBus.getDefault().post(new MotionCustomEvent());
             } else {
@@ -65,7 +69,7 @@ public class ImageProcessingTask extends AsyncTask<ImageCapturObject, Integer, I
                 context.startActivity(intentRun);
             }
         }
-        super.onPostExecute(brightnessChange);
+        super.onPostExecute(capture);
     }
 
 

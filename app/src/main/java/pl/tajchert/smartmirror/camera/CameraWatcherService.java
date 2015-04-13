@@ -21,7 +21,8 @@ public class CameraWatcherService extends Service {
 
     private Camera camera;
     private Camera.Size size;
-    private static int prevBrightness;
+    private static int brightnessPrev;
+    private static int brightnessLastChanged;
     private byte[] buffer;
     private SurfaceTexture texture;
 
@@ -123,7 +124,7 @@ public class CameraWatcherService extends Service {
             }
 
             ImageProcessingTask imageProcessingTask = new ImageProcessingTask(CameraWatcherService.this);
-            imageProcessingTask.execute(new ImageCapturObject(data, size.width, size.height, CameraWatcherService.prevBrightness));
+            imageProcessingTask.execute(new ImageCapturObject(data, size.width, size.height));
 
             final Handler h = new Handler();
             final Runnable r2 = new Runnable() {
@@ -136,8 +137,20 @@ public class CameraWatcherService extends Service {
         }
     };
 
-    public static void setPrevBrightness(Integer value) {
-        CameraWatcherService.prevBrightness = value;
+    public static void setBrightnessPrev(Integer value) {
+        CameraWatcherService.brightnessPrev = value;
+    }
+
+    public static void setBrightnessLastChanged(Integer value) {
+        CameraWatcherService.brightnessLastChanged = value;
+    }
+
+    public static int getBrightnessPrev() {
+        return brightnessPrev;
+    }
+
+    public static int getBrightnessLastChanged() {
+        return brightnessLastChanged;
     }
 
     @Override
