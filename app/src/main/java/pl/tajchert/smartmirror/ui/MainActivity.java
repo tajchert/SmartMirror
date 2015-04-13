@@ -8,6 +8,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -16,7 +17,6 @@ import java.util.ArrayList;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
-import pl.droidsonroids.gif.GifImageView;
 import pl.tajchert.smartmirror.R;
 import pl.tajchert.smartmirror.SmartMirrorApplication;
 import pl.tajchert.smartmirror.api.DateApi;
@@ -37,7 +37,8 @@ public class MainActivity extends ActionBarActivity {
     final Runnable runnableTurnOff = new Runnable() {
         @Override
         public void run() {
-            gifDecoderView.setVisibility(View.INVISIBLE);
+            //gifDecoderView.setVisibility(View.INVISIBLE);
+            linearLayout.setVisibility(View.INVISIBLE);
             WindowManager.LayoutParams params = getWindow().getAttributes();
             /** Turn off: */
             params.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
@@ -49,11 +50,14 @@ public class MainActivity extends ActionBarActivity {
     @InjectView(R.id.textMain)
     TextView textView;
 
-    @InjectView(R.id.gifView)
-    GifImageView gifDecoderView;
+    //@InjectView(R.id.gifView)
+    //GifImageView gifDecoderView;
 
     @InjectView(R.id.listHackerNews)
     ListView newsList;
+
+    @InjectView(R.id.mainLayout)
+    LinearLayout linearLayout;
 
     final Handler handler = new Handler();
     private static WebContentManager webContentManager;
@@ -88,7 +92,8 @@ public class MainActivity extends ActionBarActivity {
         //TODO restoring from original value
         params.screenBrightness = 1f;
         this.getWindow().setAttributes(params);
-        gifDecoderView.setVisibility(View.VISIBLE);
+        //gifDecoderView.setVisibility(View.VISIBLE);
+        linearLayout.setVisibility(View.VISIBLE);
         webContentManager.refresh();
 
         handler.removeCallbacks(runnableTurnOff);
@@ -104,7 +109,8 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void onEvent(DateApi dateApi) {
-        if(dateApi !=null && dateApi.text != null) {
+        if(dateApi !=null && dateApi.text != null && dateApi.text.length() > 0) {
+            dateApi.text = dateApi.text.substring(0,1).toUpperCase() + dateApi.text.substring(1);
             textView.setVisibility(View.VISIBLE);
             textView.setText(dateApi.text);
         }

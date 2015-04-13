@@ -4,7 +4,30 @@
     android:background="#000"
     android:orientation="vertical"
     android:animateLayoutChanges="true"
+    android:id="@+id/mainLayout"
     tools:context=".MainActivity">
+
+    <TextClock
+        android:id="@+id/dateText"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:layout_marginRight="10dp"
+        android:gravity="right"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:format24Hour="EEEE, d, MMM"
+        android:format12Hour="EEEE, d, MMM"
+        android:textSize="50sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    <TextClock
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:id="@+id/textClock"
+        android:format24Hour="k:mm"
+        android:format12Hour="k:mm"
+        android:gravity="center"
+        android:textSize="150sp"/>
 
     <TextView
         android:id="@+id/textMain"
@@ -12,19 +35,15 @@
         android:gravity="center"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textStyle="bold"
+        android:text=""
+        android:textSize="35sp"
         android:layout_width="match_parent"
-        android:visibility="gone"
         android:layout_height="wrap_content" />
 
-    <pl.droidsonroids.gif.GifImageView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/gifView"
-        android:src="@drawable/good_look"
-        />
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="20dp"
         android:id="@+id/listHackerNews"/>
 
 </LinearLayout>

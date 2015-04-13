@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 import de.greenrobot.event.EventBus;
+import pl.tajchert.smartmirror.SmartMirrorApplication;
 import pl.tajchert.smartmirror.events.ConnectionEvent;
 import retrofit.Callback;
 import retrofit.RestAdapter;
@@ -20,13 +21,25 @@ public class WebContentManager {
     private static final String API_URL_HACKER_NEWS = "https://hacker-news.firebaseio.com";
     private static final String API_URL_FACT = "https://numbersapi.p.mashape.com/";
     private static final int NEWS_NUMBER_HACKER_NEWS = 20;
+    private static final long milisecondsTimeHackerNewsUpdate = 600000;//10min
+    private static final long milisecondsTimeDateFactUpdate = 10000;//10sec
+    private static final long milisecondsTimeRefresh = 1000;//1sec
     public ArrayList<StoryHackerNews> storiesHackerNews;
 
     public void refresh() {
-        refreshHackerNews();
+        long currentTime= Calendar.getInstance().getTimeInMillis();
+        if(currentTime - SmartMirrorApplication.getTimeRefreshPrevious() > milisecondsTimeRefresh) {
+            if (currentTime - SmartMirrorApplication.getTimeLastHackerNewsUpdate() > milisecondsTimeHackerNewsUpdate) {
+                refreshHackerNews();
+            }
 
-        Calendar cal = Calendar.getInstance();
-        getFact((cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH));
+            if (currentTime - SmartMirrorApplication.getTimeLastDateFactUpdate() > milisecondsTimeDateFactUpdate) {
+                Calendar cal = Calendar.getInstance();
+                getFact((cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH));
+            }
+            SmartMirrorApplication.setTimeRefreshPrevious(currentTime);
+        }
+
     }
 
     public void refreshHackerNews() {
@@ -59,6 +72,7 @@ public class WebContentManager {
             public void success(StoryHackerNews storyHackerNews, Response response) {
                 storiesHackerNews.add(storyHackerNews);
                 if(storiesHackerNews.size() >= NEWS_NUMBER_HACKER_NEWS) {
+                    SmartMirrorApplication.setTimeLastHackerNewsUpdate(Calendar.getInstance().getTimeInMillis());
                     EventBus.getDefault().postSticky(storiesHackerNews);
                 }
             }
@@ -77,6 +91,7 @@ public class WebContentManager {
         articleGetter.getFactForDate("false", "true", new Callback<DateApi>() {
             @Override
             public void success(DateApi dateApi, Response response) {
+                SmartMirrorApplication.setTimeLastDateFactUpdate(Calendar.getInstance().getTimeInMillis());
                 EventBus.getDefault().postSticky(dateApi);
             }
 
