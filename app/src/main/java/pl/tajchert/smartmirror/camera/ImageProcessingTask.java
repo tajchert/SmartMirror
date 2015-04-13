@@ -14,14 +14,14 @@ import android.util.Log;
 import java.io.ByteArrayOutputStream;
 
 import de.greenrobot.event.EventBus;
-import pl.tajchert.smartmirror.MainActivity;
+import pl.tajchert.smartmirror.ui.MainActivity;
 import pl.tajchert.smartmirror.SmartMirrorApplication;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
 
 /**
  * Created by tajchert on 12.04.15.
  */
-public class ImageProcessingTask extends AsyncTask<ImageCapturObject, ImageCapturObject, ImageCapturObject> {
+public class ImageProcessingTask extends AsyncTask<ImageCaptureObject, ImageCaptureObject, ImageCaptureObject> {
     private static final String TAG = "ImageProcessingTask";
     private Context context;
 
@@ -30,12 +30,12 @@ public class ImageProcessingTask extends AsyncTask<ImageCapturObject, ImageCaptu
     }
 
     @Override
-    protected ImageCapturObject doInBackground(ImageCapturObject... params) {
+    protected ImageCaptureObject doInBackground(ImageCaptureObject... params) {
         if(params == null || params.length == 0 || params[0] == null) {
             return null;
         }
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ImageCapturObject capture = params[0];
+        ImageCaptureObject capture = params[0];
 
         YuvImage yuvImage = new YuvImage(capture.imageByteArray, ImageFormat.NV21, capture.width, capture.height, null);
         yuvImage.compressToJpeg(new Rect(0, 0, capture.width, capture.height), 50, out);
@@ -50,7 +50,7 @@ public class ImageProcessingTask extends AsyncTask<ImageCapturObject, ImageCaptu
     }
 
     @Override
-    protected void onPostExecute(ImageCapturObject capture) {
+    protected void onPostExecute(ImageCaptureObject capture) {
         if(capture == null) {
             return;
         }

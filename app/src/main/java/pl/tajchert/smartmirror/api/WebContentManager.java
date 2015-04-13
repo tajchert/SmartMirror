@@ -3,6 +3,7 @@ package pl.tajchert.smartmirror.api;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import de.greenrobot.event.EventBus;
 import pl.tajchert.smartmirror.events.ConnectionEvent;
@@ -17,27 +18,33 @@ import retrofit.client.Response;
 public class WebContentManager {
     private static final String TAG = "WebContentManager";
     private static final String API_URL_HACKER_NEWS = "https://hacker-news.firebaseio.com";
-    public static ArrayList<StoryHackerNews> storiesHackerNews;
+    private static final String API_URL_FACT = "https://numbersapi.p.mashape.com/";
+    private static final int NEWS_NUMBER_HACKER_NEWS = 20;
+    public ArrayList<StoryHackerNews> storiesHackerNews;
 
-    public static void refresh() {
+    public void refresh() {
         refreshHackerNews();
+
+        Calendar cal = Calendar.getInstance();
+        getFact((cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH));
     }
 
-    public static void refreshHackerNews() {
+    public void refreshHackerNews() {
         storiesHackerNews = new ArrayList<>();
-        IHackerNewsApi articleGetter = getHostAdapter(API_URL_HACKER_NEWS).create(IHackerNewsApi.class);
+        IHackerNewsApi articleGetter = getHostAdapter(API_URL_HACKER_NEWS, true).create(IHackerNewsApi.class);
         articleGetter.getNewsStories(new Callback<ResponseHackerNews>() {
             @Override
             public void success(ResponseHackerNews responseHackerNews, Response response) {
                 int count = 0;
-                for(Integer storyId : responseHackerNews.newsListIds) {
-                    if(count < 20) {
+                for (Integer storyId : responseHackerNews.newsListIds) {
+                    if (count < NEWS_NUMBER_HACKER_NEWS) {
                         getStoryDetails(storyId);
                     }
                     count++;
                 }
                 EventBus.getDefault().postSticky(new ConnectionEvent());
             }
+
             @Override
             public void failure(RetrofitError error) {
                 EventBus.getDefault().postSticky(new ConnectionEvent(true, error.getUrl()));
@@ -45,13 +52,15 @@ public class WebContentManager {
         });
     }
 
-    private static void getStoryDetails(Integer id) {
-        IHackerNewsDetailApi articleGetter = getHostAdapter(API_URL_HACKER_NEWS + "/v0/item/" + id + ".json").create(IHackerNewsDetailApi.class);
+    private void getStoryDetails(Integer id) {
+        IHackerNewsDetailApi articleGetter = getHostAdapter(API_URL_HACKER_NEWS + "/v0/item/" + id + ".json", false).create(IHackerNewsDetailApi.class);
         articleGetter.getStoryDetails(new Callback<StoryHackerNews>() {
             @Override
             public void success(StoryHackerNews storyHackerNews, Response response) {
                 storiesHackerNews.add(storyHackerNews);
-                EventBus.getDefault().postSticky(storiesHackerNews);
+                if(storiesHackerNews.size() >= NEWS_NUMBER_HACKER_NEWS) {
+                    EventBus.getDefault().postSticky(storiesHackerNews);
+                }
             }
 
             @Override
@@ -62,10 +71,26 @@ public class WebContentManager {
         });
     }
 
-    public static RestAdapter getHostAdapter(String baseHost) {
+    private static void getFact(String date) {
+        date = API_URL_FACT + date;
+        IDateApi articleGetter = getHostAdapter(date, false).create(IDateApi.class);
+        articleGetter.getFactForDate("false", "true", new Callback<DateApi>() {
+            @Override
+            public void success(DateApi dateApi, Response response) {
+                EventBus.getDefault().postSticky(dateApi);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.d(TAG, "failure :" + error.getResponse());
+            }
+        });
+    }
+
+    public static RestAdapter getHostAdapter(String baseHost, boolean modifyOutput) {
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(baseHost)
-                .setConverter(new LoganSquareConverter())
+                .setConverter(new LoganSquareConverter(modifyOutput))
                 .build();
         return restAdapter;
     }

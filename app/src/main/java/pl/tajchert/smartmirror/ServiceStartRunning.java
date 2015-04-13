@@ -4,6 +4,8 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
+import pl.tajchert.smartmirror.ui.MainActivity;
+
 /**
  * Created by tajchert on 09.04.15.
  */

@@ -124,7 +124,7 @@ public class CameraWatcherService extends Service {
             }
 
             ImageProcessingTask imageProcessingTask = new ImageProcessingTask(CameraWatcherService.this);
-            imageProcessingTask.execute(new ImageCapturObject(data, size.width, size.height));
+            imageProcessingTask.execute(new ImageCaptureObject(data, size.width, size.height));
 
             final Handler h = new Handler();
             final Runnable r2 = new Runnable() {

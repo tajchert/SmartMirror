@@ -1,4 +1,4 @@
-package pl.tajchert.smartmirror;
+package pl.tajchert.smartmirror.ui;
 
 import android.content.Intent;
 import android.os.Build;
@@ -7,10 +7,20 @@ import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 import pl.droidsonroids.gif.GifImageView;
+import pl.tajchert.smartmirror.R;
+import pl.tajchert.smartmirror.SmartMirrorApplication;
+import pl.tajchert.smartmirror.api.DateApi;
+import pl.tajchert.smartmirror.api.StoryHackerNews;
 import pl.tajchert.smartmirror.api.WebContentManager;
 import pl.tajchert.smartmirror.camera.CameraWatcherService;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
@@ -24,11 +34,6 @@ public class MainActivity extends ActionBarActivity {
             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
             | View.SYSTEM_UI_FLAG_FULLSCREEN
             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-    TextView textView;
-    GifImageView gifDecoderView;
-    final Handler h = new Handler();
-
-
     final Runnable runnableTurnOff = new Runnable() {
         @Override
         public void run() {
@@ -41,6 +46,21 @@ public class MainActivity extends ActionBarActivity {
             //textView.setText("BYE!");
         }
     };
+    @InjectView(R.id.textMain)
+    TextView textView;
+
+    @InjectView(R.id.gifView)
+    GifImageView gifDecoderView;
+
+    @InjectView(R.id.listHackerNews)
+    ListView newsList;
+
+    final Handler handler = new Handler();
+    private static WebContentManager webContentManager;
+    private ArrayList<String> newsListContent = new ArrayList<String>();
+    private ArrayList<StoryHackerNews> storiesHackerNews;
+    private ArrayAdapter<String> listAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,30 +68,56 @@ public class MainActivity extends ActionBarActivity {
         hideBars();
 
         setContentView(R.layout.activity_main);
-        textView = (TextView) findViewById(R.id.textMain);
-        gifDecoderView = (GifImageView) findViewById(R.id.gifView);
+        ButterKnife.inject(this);
+        listAdapter = new ArrayAdapter<>(this, R.layout.news_row, newsListContent);
+        newsList.setAdapter(listAdapter);
+        webContentManager = new WebContentManager();
 
         Intent intent = new Intent(MainActivity.this, CameraWatcherService.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startService(intent);
 
-        h.removeCallbacks(runnableTurnOff);
-        h.postDelayed(runnableTurnOff, 10000);
+        handler.removeCallbacks(runnableTurnOff);
+        handler.postDelayed(runnableTurnOff, 10000);
     }
 
     public void onEvent(MotionCustomEvent motionCustomEvent) {
         //Motion detected!
-        //textView.setText("HELLO");
         WindowManager.LayoutParams params = this.getWindow().getAttributes();
         params.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
         //TODO restoring from original value
         params.screenBrightness = 1f;
         this.getWindow().setAttributes(params);
         gifDecoderView.setVisibility(View.VISIBLE);
-        WebContentManager.refresh();
+        webContentManager.refresh();
 
-        h.removeCallbacks(runnableTurnOff);
-        h.postDelayed(runnableTurnOff, 10000);
+        handler.removeCallbacks(runnableTurnOff);
+        handler.postDelayed(runnableTurnOff, 10000);
+    }
+
+    public void onEvent(ArrayList<StoryHackerNews> storiesHackerNews) {
+        if(storiesHackerNews != null && storiesHackerNews.size() > 0) {
+            this.storiesHackerNews = storiesHackerNews;
+            newsListContent = new ArrayList<>();
+            updateNewsList();
+        }
+    }
+
+    public void onEvent(DateApi dateApi) {
+        if(dateApi !=null && dateApi.text != null) {
+            textView.setVisibility(View.VISIBLE);
+            textView.setText(dateApi.text);
+        }
+    }
+
+    private void updateNewsList(){
+        for(StoryHackerNews story : storiesHackerNews) {
+            if(story.title != null && story.title.length() > 0) {
+                newsListContent.add(story.title);
+            }
+        }
+        listAdapter = new ArrayAdapter<>(this, R.layout.news_row, newsListContent);
+        newsList.setAdapter(listAdapter);
     }
 
     @Override

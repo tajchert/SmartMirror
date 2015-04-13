@@ -19,6 +19,11 @@ import retrofit.mime.TypedString;
 
 
 public class LoganSquareConverter implements Converter {
+    private boolean modifyOutput;
+
+    public LoganSquareConverter(boolean modifyOutput) {
+        this.modifyOutput = modifyOutput;
+    }
 
     @Override public Object fromBody(TypedInput body, Type type) throws ConversionException {
         try {
