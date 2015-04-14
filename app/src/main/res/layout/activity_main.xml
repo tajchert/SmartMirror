@@ -19,6 +19,7 @@
         android:textSize="50sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
     <TextClock
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -49,6 +50,8 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
         android:layout_marginTop="30dp"
         android:id="@+id/listHackerNews"/>
 

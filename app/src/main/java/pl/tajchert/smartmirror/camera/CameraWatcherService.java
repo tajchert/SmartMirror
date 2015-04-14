@@ -21,8 +21,15 @@ public class CameraWatcherService extends Service {
 
     private Camera camera;
     private Camera.Size size;
-    private static int brightnessPrev;
-    private static int brightnessLastChanged;
+
+    public static int colorValuePrevRed;
+    public static int colorValuePrevGreen;
+    public static int colorValuePrevBlue;
+
+    public static int colorValuePrevRedLongTerm;
+    public static int colorValuePrevGreenLongTerm;
+    public static int colorValuePrevBlueLongTerm;
+
     private byte[] buffer;
     private SurfaceTexture texture;
 
@@ -137,20 +144,16 @@ public class CameraWatcherService extends Service {
         }
     };
 
-    public static void setBrightnessPrev(Integer value) {
-        CameraWatcherService.brightnessPrev = value;
+    public static void setBrightnessPrev(Integer valueRed, Integer valueGreen, Integer valueBlue) {
+        CameraWatcherService.colorValuePrevRed = valueRed;
+        CameraWatcherService.colorValuePrevGreen = valueGreen;
+        CameraWatcherService.colorValuePrevBlue = valueBlue;
     }
 
-    public static void setBrightnessLastChanged(Integer value) {
-        CameraWatcherService.brightnessLastChanged = value;
-    }
-
-    public static int getBrightnessPrev() {
-        return brightnessPrev;
-    }
-
-    public static int getBrightnessLastChanged() {
-        return brightnessLastChanged;
+    public static void setBrightnessLongTerm(Integer valueRed, Integer valueGreen, Integer valueBlue) {
+        CameraWatcherService.colorValuePrevRedLongTerm = valueRed;
+        CameraWatcherService.colorValuePrevGreenLongTerm = valueGreen;
+        CameraWatcherService.colorValuePrevBlueLongTerm = valueBlue;
     }
 
     @Override

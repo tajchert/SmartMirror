@@ -14,9 +14,9 @@ import android.util.Log;
 import java.io.ByteArrayOutputStream;
 
 import de.greenrobot.event.EventBus;
-import pl.tajchert.smartmirror.ui.MainActivity;
 import pl.tajchert.smartmirror.SmartMirrorApplication;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
+import pl.tajchert.smartmirror.ui.MainActivity;
 
 /**
  * Created by tajchert on 12.04.15.
@@ -24,6 +24,7 @@ import pl.tajchert.smartmirror.events.MotionCustomEvent;
 public class ImageProcessingTask extends AsyncTask<ImageCaptureObject, ImageCaptureObject, ImageCaptureObject> {
     private static final String TAG = "ImageProcessingTask";
     private Context context;
+    private static final int COLOR_THREADSHOLD = 8000;
 
     public ImageProcessingTask(Context context) {
         this.context = context;
@@ -41,11 +42,16 @@ public class ImageProcessingTask extends AsyncTask<ImageCaptureObject, ImageCapt
         yuvImage.compressToJpeg(new Rect(0, 0, capture.width, capture.height), 50, out);
         byte[] imageBytes = out.toByteArray();
         Bitmap image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-        int currentBrigthness = calculateBrightness(image);
-        capture.brightnessCurrent = currentBrigthness;
-        capture.brightnessChangeTemporary = Math.abs(CameraWatcherService.getBrightnessPrev() - currentBrigthness);
-        capture.brightnessChangeLongterm = Math.abs(CameraWatcherService.getBrightnessLastChanged() - currentBrigthness);
-        CameraWatcherService.setBrightnessPrev(currentBrigthness);
+        calculateBrightness(image, capture);
+        capture.colorRedChangeVal = Math.abs(CameraWatcherService.colorValuePrevRed - capture.colorValueRed);
+        capture.colorGreenChangeVal = Math.abs(CameraWatcherService.colorValuePrevGreen - capture.colorValueGreen);
+        capture.colorBlueChangeVal = Math.abs(CameraWatcherService.colorValuePrevBlue - capture.colorValueBlue);
+
+        capture.colorRedChangeValLongTerm = Math.abs(CameraWatcherService.colorValuePrevRedLongTerm - capture.colorValueRed);
+        capture.colorGreenChangeValLongTerm = Math.abs(CameraWatcherService.colorValuePrevGreenLongTerm - capture.colorValueGreen);
+        capture.colorBlueChangeValLongTerm = Math.abs(CameraWatcherService.colorValuePrevBlueLongTerm - capture.colorValueBlue);
+
+        CameraWatcherService.setBrightnessPrev(capture.colorValueRed, capture.colorValueGreen, capture.colorValueBlue);
         return capture;
     }
 
@@ -55,34 +61,42 @@ public class ImageProcessingTask extends AsyncTask<ImageCaptureObject, ImageCapt
             return;
         }
 
-        Log.d(TAG, "onPreviewFrame current: " + capture.brightnessCurrent);
-        Log.d(TAG, "onPreviewFrame changeTemporary: " + capture.brightnessChangeTemporary);
-        Log.d(TAG, "onPreviewFrame changeLongterm: " + capture.brightnessChangeLongterm);
+        if(capture.colorRedChangeVal >  COLOR_THREADSHOLD ||capture.colorGreenChangeVal >  COLOR_THREADSHOLD || capture.colorBlueChangeVal >  COLOR_THREADSHOLD) {
 
-        if(capture.brightnessChangeTemporary >  2 || capture.brightnessChangeLongterm > 2) {
-            CameraWatcherService.setBrightnessLastChanged(capture.brightnessCurrent);
-            if(SmartMirrorApplication.isActivityVisible()){
-                EventBus.getDefault().post(new MotionCustomEvent());
-            } else {
-                Intent intentRun = new Intent(context, MainActivity.class);
-                intentRun.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intentRun);
-            }
+            Log.d(TAG, "onPostExecute r:" + capture.colorRedChangeVal);
+            Log.d(TAG, "onPostExecute g:" + capture.colorGreenChangeVal);
+            Log.d(TAG, "onPostExecute b:" + capture.colorBlueChangeVal);
+            activateApp();
+        } else if(capture.colorRedChangeValLongTerm >  COLOR_THREADSHOLD ||capture.colorGreenChangeValLongTerm >  COLOR_THREADSHOLD || capture.colorBlueChangeValLongTerm >  COLOR_THREADSHOLD) {
+
+            CameraWatcherService.setBrightnessLongTerm(capture.colorValueRed, capture.colorValueGreen, capture.colorValueBlue);
+            Log.d(TAG, "onPostExecute long r:" + capture.colorRedChangeVal);
+            Log.d(TAG, "onPostExecute long g:" + capture.colorGreenChangeVal);
+            Log.d(TAG, "onPostExecute long b:" + capture.colorBlueChangeVal);
+            activateApp();
         }
         super.onPostExecute(capture);
     }
 
+    private void activateApp() {
+        if(SmartMirrorApplication.isActivityVisible()){
+            EventBus.getDefault().post(new MotionCustomEvent());
+        } else {
+            Intent intentRun = new Intent(context, MainActivity.class);
+            intentRun.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intentRun);
+        }
+    }
 
-    public int calculateBrightness(Bitmap bitmap) {
+
+    public void calculateBrightness(Bitmap bitmap, ImageCaptureObject capture) {
         int redColors = 0;
         int greenColors = 0;
         int blueColors = 0;
         int pixelCount = 0;
 
-        for (int y = 0; y < bitmap.getHeight(); y++)
-        {
-            for (int x = 0; x < bitmap.getWidth(); x++)
-            {
+        for (int y = 0; y < bitmap.getHeight(); y++) {
+            for (int x = 0; x < bitmap.getWidth(); x++) {
                 int c = bitmap.getPixel(x, y);
                 pixelCount++;
                 redColors += Color.red(c);
@@ -90,10 +104,8 @@ public class ImageProcessingTask extends AsyncTask<ImageCaptureObject, ImageCapt
                 blueColors += Color.blue(c);
             }
         }
-        // calculate average of bitmap r,g,b values
-        int red = (redColors/pixelCount);
-        int green = (greenColors/pixelCount);
-        int blue = (blueColors/pixelCount);
-        return (int) Math.round(0.2126*red + 0.7152*green + 0.0722*blue);
+        capture.colorValueRed = redColors;
+        capture.colorValueGreen = greenColors;
+        capture.colorValueBlue = blueColors;
     }
 }

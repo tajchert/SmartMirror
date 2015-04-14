@@ -5,9 +5,18 @@ package pl.tajchert.smartmirror.camera;
  */
 public class ImageCaptureObject {
     public byte [] imageByteArray;
-    public int brightnessChangeTemporary;
-    public int brightnessChangeLongterm;
-    public int brightnessCurrent;
+
+    public int colorValueRed;
+    public int colorValueGreen;
+    public int colorValueBlue;
+
+    public int colorRedChangeVal;
+    public int colorGreenChangeVal;
+    public int colorBlueChangeVal;
+
+    public int colorRedChangeValLongTerm;
+    public int colorGreenChangeValLongTerm;
+    public int colorBlueChangeValLongTerm;
 
     public int width;
     public int height;

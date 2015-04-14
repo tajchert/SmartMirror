@@ -5,7 +5,9 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
@@ -14,6 +16,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -51,6 +56,8 @@ public class MainActivity extends ActionBarActivity {
             //textView.setText("BYE!");
         }
     };
+    private TextToSpeech tts;
+
     @InjectView(R.id.textMain)
     TextView textView;
 
@@ -72,6 +79,9 @@ public class MainActivity extends ActionBarActivity {
     private ArrayList<StoryHackerNews> storiesHackerNews;
     private ArrayAdapter<String> listAdapter;
 
+    int delay = 500; // delay for 1 sec.
+    int period = 1250; // repeat every 1 sec.
+    int currentListTopItem = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,8 +98,54 @@ public class MainActivity extends ActionBarActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startService(intent);
 
+        setRunningTasks();
+        tts=new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
+
+            @Override
+            public void onInit(int status) {
+                // TODO Auto-generated method stub
+                if(status == TextToSpeech.SUCCESS){
+                    int result=tts.setLanguage(Locale.US);
+                    if(result==TextToSpeech.LANG_MISSING_DATA || result==TextToSpeech.LANG_NOT_SUPPORTED){
+                        Log.e("error", "This Language is not supported");
+                    } else{
+                        ConvertTextToSpeech("");
+                    }
+                }
+                else
+                    Log.e("error", "Initilization Failed!");
+            }
+        });
+    }
+
+    private void ConvertTextToSpeech(String text) {
+        if (text != null && !"".equals(text)) {
+            tts.speak(text + "is saved", TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
+
+
+    private void setRunningTasks() {
         handler.removeCallbacks(runnableTurnOff);
         handler.postDelayed(runnableTurnOff, 10000);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            public void run() {
+                //move news list
+                if(linearLayout.getVisibility() == View.INVISIBLE) {
+                    return;
+                }
+                if(newsList == null || newsList.getAdapter() == null || newsList.getAdapter().isEmpty() || newsListContent == null || newsListContent.size() < 4) {
+                    return;
+                }
+                if(currentListTopItem >= newsListContent.size()) {
+                    currentListTopItem = 0;
+                } else {
+                    currentListTopItem++;
+                }
+                newsList.smoothScrollToPosition(currentListTopItem);
+            }
+        }, delay, period);
     }
 
     public void onEvent(MotionCustomEvent motionCustomEvent) {
