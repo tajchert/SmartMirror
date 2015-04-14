@@ -1,11 +1,11 @@
 package pl.tajchert.smartmirror.ui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
@@ -26,6 +26,7 @@ import pl.tajchert.smartmirror.api.WeatherCity;
 import pl.tajchert.smartmirror.api.WebContentManager;
 import pl.tajchert.smartmirror.camera.CameraWatcherService;
 import pl.tajchert.smartmirror.events.MotionCustomEvent;
+import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -52,6 +53,9 @@ public class MainActivity extends ActionBarActivity {
     };
     @InjectView(R.id.textMain)
     TextView textView;
+
+    @InjectView(R.id.weatherView)
+    WeatherView weatherView;
 
     //@InjectView(R.id.gifView)
     //GifImageView gifDecoderView;
@@ -120,7 +124,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void onEvent(WeatherCity weatherCity) {
-        Log.d(TAG, "onEvent weather: " + weatherCity);
+        weatherView.setWeather(weatherCity, MainActivity.this);
     }
 
     private void updateNewsList(){
@@ -166,13 +170,18 @@ public class MainActivity extends ActionBarActivity {
             final View decorView = getWindow().getDecorView();
             decorView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
 
-                        @Override
-                        public void onSystemUiVisibilityChange(int visibility) {
-                            if((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                                decorView.setSystemUiVisibility(flags);
-                            }
-                        }
-                    });
+                @Override
+                public void onSystemUiVisibilityChange(int visibility) {
+                    if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                        decorView.setSystemUiVisibility(flags);
+                    }
+                }
+            });
         }
+    }
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
     }
 }

@@ -5,6 +5,8 @@ import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
 
+import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
+
 /**
  * Created by tajchert on 09.04.15.
  */
@@ -18,6 +20,11 @@ public class SmartMirrorApplication extends Application {
     private static long timeRefreshPrevious;
 
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        CalligraphyConfig.initDefault(new CalligraphyConfig.Builder().build());
+    }
 
     public static boolean isActivityVisible() {
         return activityVisible;

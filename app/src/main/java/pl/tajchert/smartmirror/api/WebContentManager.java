@@ -35,12 +35,12 @@ public class WebContentManager {
         long currentTime= Calendar.getInstance().getTimeInMillis();
         if(currentTime - SmartMirrorApplication.getTimeRefreshPrevious() > milisecondsTimeRefresh) {
             if (currentTime - SmartMirrorApplication.getTimeLastHackerNewsUpdate() > milisecondsTimeHackerNewsUpdate) {
-                //refreshHackerNews();
+                refreshHackerNews();
             }
 
             if (currentTime - SmartMirrorApplication.getTimeLastDateFactUpdate() > milisecondsTimeDateFactUpdate) {
                 Calendar cal = Calendar.getInstance();
-                //getFact((cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH));
+                getFact((cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH));
             }
 
             if (currentTime - SmartMirrorApplication.getTimeLastWeatherUpdate() > milisecondsTimeWeatherUpdate) {

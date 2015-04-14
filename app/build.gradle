@@ -29,5 +29,6 @@ dependencies {
     compile 'com.squareup.retrofit:retrofit:1.9.0'
     apt 'com.bluelinelabs:logansquare-compiler:1.0.6'
     compile 'com.bluelinelabs:logansquare:1.0.6'
+    compile 'uk.co.chrisjenx:calligraphy:2.0.2'
     compile 'com.jakewharton:butterknife:6.1.0'
 }
