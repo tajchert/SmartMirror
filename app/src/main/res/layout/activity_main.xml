@@ -44,7 +44,7 @@
     <pl.tajchert.smartmirror.ui.WeatherView
         android:layout_width="match_parent"
         android:layout_marginTop="10dp"
-        android:layout_height="200dp"
+        android:layout_height="230dp"
         android:id="@+id/weatherView"/>
 
     <ListView

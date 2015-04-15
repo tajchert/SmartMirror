@@ -24,7 +24,8 @@ import pl.tajchert.smartmirror.ui.MainActivity;
 public class ImageProcessingTask extends AsyncTask<ImageCaptureObject, ImageCaptureObject, ImageCaptureObject> {
     private static final String TAG = "ImageProcessingTask";
     private Context context;
-    private static final int COLOR_THREADSHOLD = 8000;
+    private static final int COLOR_THREADSHOLD = 5;
+    private static final int COLOR_SIGNIFICANT_THREADSHOLD = 25;
 
     public ImageProcessingTask(Context context) {
         this.context = context;
@@ -61,26 +62,39 @@ public class ImageProcessingTask extends AsyncTask<ImageCaptureObject, ImageCapt
             return;
         }
 
-        if(capture.colorRedChangeVal >  COLOR_THREADSHOLD ||capture.colorGreenChangeVal >  COLOR_THREADSHOLD || capture.colorBlueChangeVal >  COLOR_THREADSHOLD) {
+        if(capture.colorRedChangeVal >  COLOR_SIGNIFICANT_THREADSHOLD ||capture.colorGreenChangeVal >  COLOR_SIGNIFICANT_THREADSHOLD || capture.colorBlueChangeVal >  COLOR_SIGNIFICANT_THREADSHOLD) {
 
             Log.d(TAG, "onPostExecute r:" + capture.colorRedChangeVal);
             Log.d(TAG, "onPostExecute g:" + capture.colorGreenChangeVal);
             Log.d(TAG, "onPostExecute b:" + capture.colorBlueChangeVal);
-            activateApp();
+            activateApp(true);
+        } else if(capture.colorRedChangeValLongTerm >  COLOR_SIGNIFICANT_THREADSHOLD ||capture.colorGreenChangeValLongTerm >  COLOR_SIGNIFICANT_THREADSHOLD || capture.colorBlueChangeValLongTerm >  COLOR_SIGNIFICANT_THREADSHOLD) {
+
+            CameraWatcherService.setBrightnessLongTerm(capture.colorValueRed, capture.colorValueGreen, capture.colorValueBlue);
+            Log.d(TAG, "onPostExecute long r:" + capture.colorRedChangeVal);
+            Log.d(TAG, "onPostExecute long g:" + capture.colorGreenChangeVal);
+            Log.d(TAG, "onPostExecute long b:" + capture.colorBlueChangeVal);
+            activateApp(true);
+        } else if(capture.colorRedChangeVal >  COLOR_THREADSHOLD ||capture.colorGreenChangeVal >  COLOR_THREADSHOLD || capture.colorBlueChangeVal >  COLOR_THREADSHOLD) {
+
+            Log.d(TAG, "onPostExecute r:" + capture.colorRedChangeVal);
+            Log.d(TAG, "onPostExecute g:" + capture.colorGreenChangeVal);
+            Log.d(TAG, "onPostExecute b:" + capture.colorBlueChangeVal);
+            activateApp(false);
         } else if(capture.colorRedChangeValLongTerm >  COLOR_THREADSHOLD ||capture.colorGreenChangeValLongTerm >  COLOR_THREADSHOLD || capture.colorBlueChangeValLongTerm >  COLOR_THREADSHOLD) {
 
             CameraWatcherService.setBrightnessLongTerm(capture.colorValueRed, capture.colorValueGreen, capture.colorValueBlue);
             Log.d(TAG, "onPostExecute long r:" + capture.colorRedChangeVal);
             Log.d(TAG, "onPostExecute long g:" + capture.colorGreenChangeVal);
             Log.d(TAG, "onPostExecute long b:" + capture.colorBlueChangeVal);
-            activateApp();
+            activateApp(false);
         }
         super.onPostExecute(capture);
     }
 
-    private void activateApp() {
+    private void activateApp(boolean isSignificant) {
         if(SmartMirrorApplication.isActivityVisible()){
-            EventBus.getDefault().post(new MotionCustomEvent());
+            EventBus.getDefault().post(new MotionCustomEvent(isSignificant));
         } else {
             Intent intentRun = new Intent(context, MainActivity.class);
             intentRun.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -104,8 +118,9 @@ public class ImageProcessingTask extends AsyncTask<ImageCaptureObject, ImageCapt
                 blueColors += Color.blue(c);
             }
         }
-        capture.colorValueRed = redColors;
-        capture.colorValueGreen = greenColors;
-        capture.colorValueBlue = blueColors;
+        capture.colorValueRed = redColors/pixelCount;
+        capture.colorValueGreen = greenColors/pixelCount;
+        capture.colorValueBlue = blueColors/pixelCount;
+        //Log.d(TAG, "calculateBrightness r:" + capture.colorValueRed + ",g:" + capture.colorValueGreen +",b:" + capture.colorValueBlue);
     }
 }

@@ -56,8 +56,8 @@ public class WebContentManager {
         if(location == null) {
            return;
         }
-        IWeatherApi articleGetter = getHostAdapter(API_URL_WEATHER, false).create(IWeatherApi.class);
-        articleGetter.getForecastDayily(location.getLatitude(), location.getLongitude(), "metric", 3, new Callback<WeatherCity>() {
+        IWeatherApi weatherGetter = getHostAdapter(API_URL_WEATHER, false).create(IWeatherApi.class);
+        weatherGetter.getForecastDayily(location.getLatitude(), location.getLongitude(), "metric", 3, new Callback<WeatherCity>() {
             @Override
             public void success(WeatherCity weatherWeather, Response response) {
                 Log.d(TAG, "success :" + weatherWeather);
@@ -76,8 +76,8 @@ public class WebContentManager {
 
     public void refreshHackerNews() {
         storiesHackerNews = new ArrayList<>();
-        IHackerNewsApi articleGetter = getHostAdapter(API_URL_HACKER_NEWS, true).create(IHackerNewsApi.class);
-        articleGetter.getNewsStories(new Callback<ResponseHackerNews>() {
+        IHackerNewsApi hackerNewsGetter = getHostAdapter(API_URL_HACKER_NEWS, true).create(IHackerNewsApi.class);
+        hackerNewsGetter.getNewsStories(new Callback<ResponseHackerNews>() {
             @Override
             public void success(ResponseHackerNews responseHackerNews, Response response) {
                 int count = 0;
@@ -98,12 +98,12 @@ public class WebContentManager {
     }
 
     private void getStoryDetails(Integer id) {
-        IHackerNewsDetailApi articleGetter = getHostAdapter(API_URL_HACKER_NEWS + "/v0/item/" + id + ".json", false).create(IHackerNewsDetailApi.class);
-        articleGetter.getStoryDetails(new Callback<StoryHackerNews>() {
+        IHackerNewsDetailApi storyDetailsGetter = getHostAdapter(API_URL_HACKER_NEWS + "/v0/item/" + id + ".json", false).create(IHackerNewsDetailApi.class);
+        storyDetailsGetter.getStoryDetails(new Callback<StoryHackerNews>() {
             @Override
             public void success(StoryHackerNews storyHackerNews, Response response) {
                 storiesHackerNews.add(storyHackerNews);
-                if(storiesHackerNews.size() >= NEWS_NUMBER_HACKER_NEWS) {
+                if (storiesHackerNews.size() >= NEWS_NUMBER_HACKER_NEWS) {
                     SmartMirrorApplication.setTimeLastHackerNewsUpdate(Calendar.getInstance().getTimeInMillis());
                     EventBus.getDefault().postSticky(storiesHackerNews);
                 }
@@ -119,8 +119,8 @@ public class WebContentManager {
 
     private static void getFact(String date) {
         date = API_URL_FACT + date;
-        IDateApi articleGetter = getHostAdapter(date, false).create(IDateApi.class);
-        articleGetter.getFactForDate("false", "true", new Callback<DateApi>() {
+        IDateApi factGetter = getHostAdapter(date, false).create(IDateApi.class);
+        factGetter.getFactForDate("false", "true", new Callback<DateApi>() {
             @Override
             public void success(DateApi dateApi, Response response) {
                 SmartMirrorApplication.setTimeLastDateFactUpdate(Calendar.getInstance().getTimeInMillis());
